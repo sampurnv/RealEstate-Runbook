@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Real Estate Marketing Incident Runbook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Real Estate Marketing Incident Runbook</h1>
+      <p class="subtitle">Describe an incident to get suggested resolution steps.</p>
+    </header>
+
+    <main class="layout">
+      <section class="card">
+        <h2>Incident Query</h2>
+        <form id="incident-form">
+          <label for="query">Describe the problem</label>
+          <textarea id="query" name="query" rows="4" placeholder="Example: Leads from website and Facebook dropped sharply since yesterday..."></textarea>
+          <button type="submit">Get Suggestions</button>
+        </form>
+      </section>
+
+      <section class="card" id="result-card" hidden>
+        <h2>Suggested Actions</h2>
+        <div id="backend-label" class="badge"></div>
+        <pre id="result-text"></pre>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>API endpoints are available under <code>/api</code>.</span>
+    </footer>
+
+    <script>
+      const form = document.getElementById('incident-form');
+      const resultCard = document.getElementById('result-card');
+      const resultText = document.getElementById('result-text');
+      const backendLabel = document.getElementById('backend-label');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const query = document.getElementById('query').value.trim();
+        if (!query) return;
+
+        resultCard.hidden = false;
+        backendLabel.textContent = 'Loading...';
+        resultText.textContent = '';
+
+        try {
+          const resp = await fetch('/api/incidents/suggest-runbook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query }),
+          });
+
+          if (!resp.ok) {
+            backendLabel.textContent = 'Error';
+            resultText.textContent = 'Request failed with status ' + resp.status;
+            return;
+          }
+
+          const data = await resp.json();
+          const backend = data.backend || 'unknown';
+          backendLabel.textContent = backend === 'langchain_retrievalqa'
+            ? 'LangChain RetrievalQA'
+            : 'Rule-based Runbook Lookup';
+
+          if (data.answer) {
+            resultText.textContent = data.answer;
+          } else if (data.excerpt) {
+            resultText.textContent = data.excerpt;
+          } else {
+            resultText.textContent = 'No detailed suggestion available for this query.';
+          }
+        } catch (err) {
+          backendLabel.textContent = 'Error';
+          resultText.textContent = 'Error calling API: ' + err;
+        }
+      });
+    </script>
+  </body>
+</html>

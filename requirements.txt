@@ -1,0 +1,10 @@
+flask>=3.0.0
+
+# LangChain + vector store + local embeddings + optional OpenAI LLM.
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-openai>=0.2.0
+langchain-text-splitters>=0.3.0
+faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0
+torch>=2.3.0
